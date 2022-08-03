@@ -1,9 +1,8 @@
 from PIL import Image, ImageFont, ImageDraw
-from decouple import config
+from dotenv import load_dotenv
 import requests
 import base64
-
-API_KEY = config('KEY')
+import os 
 
 # CONSTANTS
 # (R,G,B,Opacity)
@@ -12,7 +11,6 @@ GREEN_OPAQUE = (51, 201, 102, 225)
 GOLD_OPAQUE = (254, 201, 1, 255)
 BLACK_OPAQUE = (0, 0, 0, 255)
 WHITE_TRANSPARENT = (255, 255, 255, 0)
-CARD_TEMPLATE = "bg.png"
 NAME_COORDINATES = (35, 200) 
 TIER_COORDINATES = (695, 90)  
 EXPIRY_COORDINATES = (695, 210)  
@@ -21,6 +19,19 @@ NAME_FONT_SIZE = 53
 TIER_FONT_SIZE = 29
 EXPIRY_FONT_SIZE = 33
 CODE_FONT_SIZE = 59
+
+# If card_gen.py is run alone or by heroku
+if "card" in os.getcwd():
+    CARD_TEMPLATE_PATH = "../images/bg.png"
+    CARD_RESULT_PATH = "../images/result.png"
+    GALANO_FONT_PATH = "../fonts/GalanoGrotesqueRegular.ttf"
+    MYRIAD_FONT_PATH = "../fonts/MyriadProSemibold.ttf"
+else:
+    CARD_TEMPLATE_PATH = "./app/images/bg.png"
+    CARD_RESULT_PATH = "./app/images/result.png"
+    GALANO_FONT_PATH = "./app/fonts/GalanoGrotesqueRegular.ttf"
+    MYRIAD_FONT_PATH = "./app/fonts/MyriadProSemibold.ttf"
+
 
 months = {
     "01": "Jan",
@@ -37,7 +48,11 @@ months = {
     "12": "Dec"
 }
 
-bg = Image.open(CARD_TEMPLATE).convert('RGB')
+# Get env variables
+load_dotenv()
+
+# Convert card template
+bg = Image.open(CARD_TEMPLATE_PATH).convert('RGB')
 
 def convertDate(date):
     date = date.split("-")
@@ -46,8 +61,8 @@ def convertDate(date):
     day = date[2]
     return f"{month} {day}, {year}"
 
-def toBinary(image):
-    return base64.b64encode(open("result.png", "rb").read())
+def toBinary():
+    return base64.b64encode(open(CARD_RESULT_PATH, "rb").read())
 
 class AccessCard:
     def __init__(self, name, code, tier, exp):
@@ -57,14 +72,10 @@ class AccessCard:
         self.exp = convertDate(exp)
         self.image = bg.copy()
 
-        self.nameFont = ImageFont.truetype(
-            'GalanoGrotesqueRegular.ttf', NAME_FONT_SIZE)
-        self.tierFont = ImageFont.truetype(
-            'Myriad Pro Semibold.ttf', TIER_FONT_SIZE)
-        self.codeFont = ImageFont.truetype(
-            'GalanoGrotesqueRegular.ttf', CODE_FONT_SIZE)
-        self.expFont = ImageFont.truetype(
-            'GalanoGrotesqueRegular.ttf', EXPIRY_FONT_SIZE)
+        self.nameFont = ImageFont.truetype(GALANO_FONT_PATH, NAME_FONT_SIZE)
+        self.tierFont = ImageFont.truetype(MYRIAD_FONT_PATH, TIER_FONT_SIZE)
+        self.codeFont = ImageFont.truetype(GALANO_FONT_PATH, CODE_FONT_SIZE)
+        self.expFont = ImageFont.truetype(GALANO_FONT_PATH, EXPIRY_FONT_SIZE)
 
 
     # Generic function 
@@ -105,14 +116,14 @@ class AccessCard:
         return self
 
     def saveImage(self):
-        self.image.save("result.png")
+        self.image.save(CARD_RESULT_PATH)
         return self
     
     def uploadImgbb(self):
         url = "https://api.imgbb.com/1/upload"
         payload = {
-            'key' : API_KEY,
-            'image' : toBinary('result.png'),
+            'key' : os.getenv('API_KEY'),
+            'image' : toBinary(),
             'expiration' : 60
         }
         headers = {}
@@ -128,5 +139,5 @@ class AccessCard:
     
 
 
-# print(bg.format, bg.size, bg.mode)
-# card = AccessCard("Temp", "12345", "platinum level", "1999-01-01").generateCard().saveImage()
+
+# AccessCard("first last", "12345", "platinum level", "1999-01-01").generateCard().showImage()

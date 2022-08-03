@@ -1,12 +1,11 @@
-from fastapi import FastAPI, Request, Form, Response, UploadFile, File
+from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse, HTMLResponse
-from card_gen import AccessCard
+from fastapi.responses import HTMLResponse
+from app.card.card_gen import AccessCard
 
 
 app = FastAPI()
 
-card_image_path = "result.png"
 templates = Jinja2Templates(directory="templates")
 
 
@@ -18,10 +17,8 @@ async def root(request: Request):
 async def create_card (
     request: Request, name: str = Form(...), memberCode: str = Form(...), tier: str = Form(...), date: str = Form(...)
 ):
-    
+
     url = AccessCard(name, memberCode, tier, date).wrapper()
-    # return HTMLResponse(content=templates/success.html, status_code=200)
-    # return FileResponse(open("result.png"))
     return templates.TemplateResponse("success.html", {
         "request": request, "url" : url
         }) 

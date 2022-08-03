@@ -1,5 +1,5 @@
 .venv/
 __pycache__/
-bg.png
+/app/images/bg.png
+/app/images/result.png
 .env
-result.png
